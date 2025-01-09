@@ -20,7 +20,7 @@ pip install databrief
 To serialize a dataclass instance to bytes, use the `dump` function:
 
 ```python
-from databrief.databrief import dump
+from databrief import dump
 from dataclasses import dataclass
 
 @dataclass
@@ -39,7 +39,7 @@ print(serialized)
 To deserialize bytes back to a dataclass instance, use the `load` function:
 
 ```python
-from databrief.databrief import load
+from databrief import load
 
 deserialized = load(serialized, TestData)
 print(deserialized)
@@ -51,7 +51,7 @@ Here is a complete example:
 
 ```python
 from dataclasses import dataclass
-from databrief.databrief import dump, load
+from databrief import dump, load
 
 @dataclass
 class Example:
