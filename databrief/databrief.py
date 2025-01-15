@@ -12,13 +12,13 @@ def dump(instance: Any) -> bytes:
     format_parts = []
     for field in fields(instance):
         value = getattr(instance, field.name)
-        if field.type == int:
+        if issubclass(field.type, int):
             int_float_values.append(value)
             format_parts.append('i')
-        elif field.type == float:
+        elif issubclass(field.type, float):
             int_float_values.append(value)
             format_parts.append('d')
-        elif field.type == bool:
+        elif issubclass(field.type, bool):
             bools.append(value)
         else:
             raise TypeError(f"Unsupported field type: {field.type}")
@@ -45,13 +45,13 @@ def load(data: bytes, cls: Type[Any]) -> Any:
     format_parts = []
 
     for field in fields(cls):
-        if field.type == int:
+        if issubclass(field.type, int):
             int_float_fields.append(field)
             format_parts.append('i')
-        elif field.type == float:
+        elif issubclass(field.type, float):
             int_float_fields.append(field)
             format_parts.append('d')
-        elif field.type == bool:
+        elif issubclass(field.type, bool):
             bool_fields.append(field)
         else:
             raise TypeError(f"Unsupported field type: {field.type}")

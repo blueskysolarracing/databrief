@@ -1,1 +1,1 @@
-from databrief import dump, load
+from databrief import databrief
