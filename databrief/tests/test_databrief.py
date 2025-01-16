@@ -1,8 +1,6 @@
-from databrief.databrief import dump, load
+from databrief import dump, load
 import unittest
 from dataclasses import dataclass
-import sys
-sys.path.append('../databrief')
 
 
 @dataclass

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='databrief',
-    version='0.0.1.dev0',
+    version='0.0.1.dev1',
     description='A python library for serializing dataclasses to bytes and back.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
