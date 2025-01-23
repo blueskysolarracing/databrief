@@ -1,1 +1,3 @@
-from databrief.databrief import dump, load
+__all__ = 'dump', 'load'
+
+from databrief.utilities import dump, load
