@@ -28,6 +28,6 @@ setup(
         'Tracker': 'https://github.com/blueskysolarracing/databrief/issues',
     },
     packages=find_packages(),
-    python_requires='>=3.13',
+    python_requires='>=3.11',
     package_data={'databrief': ['py.typed']},
 )
