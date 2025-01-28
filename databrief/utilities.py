@@ -10,6 +10,7 @@ def dump(instance: Any) -> bytes:
     int_float_values = []
     bools = []
     format_parts = []
+    strings = []
 
     for field in fields(instance):
         value = getattr(instance, field.name)
@@ -22,6 +23,9 @@ def dump(instance: Any) -> bytes:
             format_parts.append('d')
         elif issubclass(field.type, bool):  # type: ignore[arg-type]
             bools.append(value)
+        elif issubclass(field.type, str):
+            encoded_string = value.encode('utf-8')
+            strings.append(encoded_string)
         else:
             raise TypeError(f'Unsupported field type {field.type}')
 
@@ -33,7 +37,12 @@ def dump(instance: Any) -> bytes:
         bool_byte = sum(1 << j for j, b in enumerate(bools[i:i + 8]) if b)
         bool_bytes.append(bool_byte)
 
-    return packed_data + bytes(bool_bytes)
+    string_bytes = bytearray()
+    for encoded_string in strings:
+        string_bytes.extend(struct.pack('i', len(encoded_string)))
+        string_bytes.extend(encoded_string)
+
+    return packed_data + bytes(bool_bytes) + bytes(string_bytes)
 
 
 def load(data: bytes, cls: Type[Any]) -> Any:
@@ -45,6 +54,7 @@ def load(data: bytes, cls: Type[Any]) -> Any:
     int_float_fields = []
     bool_fields = []
     format_parts = []
+    string_fields = []
 
     for field in fields(cls):
         if issubclass(field.type, int):  # type: ignore[arg-type]
@@ -55,6 +65,8 @@ def load(data: bytes, cls: Type[Any]) -> Any:
             format_parts.append('d')
         elif issubclass(field.type, bool):  # type: ignore[arg-type]
             bool_fields.append(field)
+        elif issubclass(field.type, str):
+            string_fields.append(field)
         else:
             raise TypeError(f'Unsupported field type {field.type}')
 
@@ -77,5 +89,12 @@ def load(data: bytes, cls: Type[Any]) -> Any:
 
     for field, value in zip(bool_fields, bool_values):
         field_values[field.name] = bool(value)
+    
+    for field in string_fields:
+        length = struct.unpack_from('i', data, offset)[0]
+        offset += struct.calcsize('i')
+        value = data[offset:offset + length].decode('utf-8')
+        offset += length
+        field_values[field.name] = value
 
     return cls(**field_values)

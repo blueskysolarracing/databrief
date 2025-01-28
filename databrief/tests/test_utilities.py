@@ -25,6 +25,12 @@ class TestDataMoreFields:
 class TestEmptyData:
     pass
 
+@dataclass
+class TestDataWithString:
+    a: int
+    b: str
+    c: bool
+
 
 class TestDatabrief(TestCase):
     def test_dump_and_load(self) -> None:
@@ -100,6 +106,25 @@ class TestDatabrief(TestCase):
 
         self.assertEqual(original, loaded)
 
+    def test_string_field(self) -> None:
+        original = TestDataWithString(a=1, b="hello", c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithString)
+        self.assertEqual(original, loaded)
+
+    def test_empty_string_field(self) -> None:
+        original = TestDataWithString(a=1, b="", c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithString)
+        self.assertEqual(original, loaded)
+
+    def test_long_string_field(self) -> None:
+        long_string = "a" * 1000
+        original = TestDataWithString(a=1, b=long_string, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithString)
+        self.assertEqual(original, loaded)
+        
 
 if __name__ == '__main__':
     main()
