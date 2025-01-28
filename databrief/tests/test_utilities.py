@@ -25,6 +25,7 @@ class TestDataMoreFields:
 class TestEmptyData:
     pass
 
+
 @dataclass
 class TestDataWithString:
     a: int
@@ -124,7 +125,7 @@ class TestDatabrief(TestCase):
         dumped = dump(original)
         loaded = load(dumped, TestDataWithString)
         self.assertEqual(original, loaded)
-        
+
 
 if __name__ == '__main__':
     main()

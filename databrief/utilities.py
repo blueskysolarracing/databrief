@@ -89,7 +89,7 @@ def load(data: bytes, cls: Type[Any]) -> Any:
 
     for field, value in zip(bool_fields, bool_values):
         field_values[field.name] = bool(value)
-    
+
     for field in string_fields:
         length = struct.unpack_from('i', data, offset)[0]
         offset += struct.calcsize('i')
