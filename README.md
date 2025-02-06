@@ -5,7 +5,7 @@
 ## Features
 
 - Compact serialization
-- Supports `int`, `float`, `bool`, and `string` field types
+- Supports `int`, `float`, `bool`, and `str` field types
 
 ## Installation
 
