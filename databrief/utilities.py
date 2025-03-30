@@ -1,10 +1,16 @@
 from dataclasses import fields, is_dataclass
-from typing import Any, Type
+from typing import Any, Type, get_origin, get_args
 import struct
 
 
 def _dump_field(value: Any, field_type: Type) -> bytes:
-    if issubclass(field_type, int):  # type: ignore[arg-type]
+    if get_origin(field_type) is list:
+        element_type = get_args(field_type)[0]
+        packed_list = struct.pack('i', len(value))
+        for item in value:
+            packed_list += _dump_field(item, element_type)
+        return packed_list
+    elif issubclass(field_type, int):  # type: ignore[arg-type]
         return struct.pack('i', value)
     elif issubclass(field_type, float):  # type: ignore[arg-type]
         return struct.pack('d', value)
@@ -17,7 +23,15 @@ def _dump_field(value: Any, field_type: Type) -> bytes:
         raise TypeError(f'Unsupported field type {field_type}')
 
 def _load_field(data: bytes, offset: int, field_type: Type) -> (Any, int):
-    if issubclass(field_type, int):  # type: ignore[arg-type]
+    if get_origin(field_type) is list:
+        element_type = field_type.__args__[0]
+        length = struct.unpack_from('i', data, offset)[0]
+        offset += struct.calcsize('i')
+        value = []
+        for _ in range(length):
+            item, offset = _load_field(data, offset, element_type)
+            value.append(item)
+    elif issubclass(field_type, int):  # type: ignore[arg-type]
         value = struct.unpack_from('i', data, offset)[0]
         offset += struct.calcsize('i')
     elif issubclass(field_type, float):  # type: ignore[arg-type]
@@ -44,7 +58,9 @@ def dump(instance: Any) -> bytes:
 
     for field in fields(instance):
         value = getattr(instance, field.name)
-        if issubclass(field.type, bool):  # type: ignore[arg-type]
+        if get_origin(field.type) is list:
+            packed_data.extend(_dump_field(value, field.type))
+        elif issubclass(field.type, bool):  # type: ignore[arg-type]
             bools.append(value)
         else:
             packed_data.extend(_dump_field(value, field.type))
@@ -67,7 +83,10 @@ def load(data: bytes, cls: Type[Any]) -> Any:
     bool_fields = []
 
     for field in fields(cls):
-        if issubclass(field.type, bool):  # type: ignore[arg-type]
+        if get_origin(field.type) is list:
+            value, offset = _load_field(data, offset, field.type)
+            field_values[field.name] = value
+        elif issubclass(field.type, bool):  # type: ignore[arg-type]
             bool_fields.append(field)
         else:
             value, offset = _load_field(data, offset, field.type)
