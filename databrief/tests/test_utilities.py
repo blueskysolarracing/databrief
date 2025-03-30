@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List, Set, Dict
 from unittest import main, TestCase
 
 from databrief.utilities import dump, load
@@ -30,6 +31,75 @@ class TestEmptyData:
 class TestDataWithString:
     a: int
     b: str
+    c: bool
+
+
+@dataclass
+class TestDataWithList:
+    a: int
+    b: List[int]
+    c: bool
+
+
+@dataclass
+class TestDataWithTuple:
+    a: int
+    b: tuple[int, float, str]
+    c: bool
+
+
+@dataclass
+class TestDataWithSet:
+    a: int
+    b: Set[int]
+    c: bool
+
+
+@dataclass
+class TestDataWithNestedList:
+    a: int
+    b: List[List[int]]
+    c: bool
+
+
+@dataclass
+class TestDataWithDict:
+    a: int
+    b: Dict[str, int]
+    c: bool
+
+
+@dataclass
+class TestDataWithNestedDict:
+    a: int
+    b: Dict[str, Dict[str, int]]
+    c: bool
+
+
+@dataclass
+class TestDataWithMixedTuple:
+    a: int
+    b: tuple[int, List[str], Dict[str, float]]
+    c: bool
+
+
+@dataclass
+class TestDataWithUnsupportedType:
+    a: int
+    b: complex  # Unsupported type
+    c: bool
+
+
+@dataclass
+class InnerData:
+    x: int
+    y: str
+
+
+@dataclass
+class OuterData:
+    a: int
+    b: InnerData
     c: bool
 
 
@@ -126,6 +196,120 @@ class TestDatabrief(TestCase):
         loaded = load(dumped, TestDataWithString)
         self.assertEqual(original, loaded)
 
+    def test_list_field(self) -> None:
+        original = TestDataWithList(a=1, b=[1, 2, 3, 4, 5], c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithList)
+        self.assertEqual(original, loaded)
+
+    def test_empty_list_field(self) -> None:
+        original = TestDataWithList(a=1, b=[], c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithList)
+        self.assertEqual(original, loaded)
+
+    def test_large_list_field(self) -> None:
+        large_list = list(range(10000))
+        original = TestDataWithList(a=1, b=large_list, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithList)
+        self.assertEqual(original, loaded)
+
+    def test_tuple_field(self) -> None:
+        original = TestDataWithTuple(a=1, b=(42, 3.14, "hello"), c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithTuple)
+        self.assertEqual(original, loaded)
+
+    def test_set_field(self) -> None:
+        original = TestDataWithSet(a=1, b={1, 2, 3, 4, 5}, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithSet)
+        self.assertEqual(original, loaded)
+
+    def test_empty_set_field(self) -> None:
+        original = TestDataWithSet(a=1, b=set(), c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithSet)
+        self.assertEqual(original, loaded)
+
+    def test_nested_list_field(self) -> None:
+        original = TestDataWithNestedList(a=1, b=[[1, 2], [3, 4], [5]], c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithNestedList)
+        self.assertEqual(original, loaded)
+
+    def test_empty_nested_list_field(self) -> None:
+        original = TestDataWithNestedList(a=1, b=[], c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithNestedList)
+        self.assertEqual(original, loaded)
+
+    def test_dict_field(self) -> None:
+        original = TestDataWithDict(a=1, b={"key1": 10, "key2": 20}, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithDict)
+        self.assertEqual(original, loaded)
+
+    def test_empty_dict_field(self) -> None:
+        original = TestDataWithDict(a=1, b={}, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithDict)
+        self.assertEqual(original, loaded)
+
+    def test_large_dict_field(self) -> None:
+        large_dict = {f"key{i}": i for i in range(1000)}
+        original = TestDataWithDict(a=1, b=large_dict, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithDict)
+        self.assertEqual(original, loaded)
+
+    def test_nested_dict_field(self) -> None:
+        original = TestDataWithNestedDict(a=1, b={"outer": {"inner1": 10, "inner2": 20}}, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithNestedDict)
+        self.assertEqual(original, loaded)
+
+    def test_empty_nested_dict_field(self) -> None:
+        original = TestDataWithNestedDict(a=1, b={}, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithNestedDict)
+        self.assertEqual(original, loaded)
+
+    def test_mixed_tuple_field(self) -> None:
+        original = TestDataWithMixedTuple(a=1, b=(42, ["hello", "world"], {"key": 3.14}), c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithMixedTuple)
+        self.assertEqual(original, loaded)
+
+    def test_unsupported_type(self) -> None:
+        original = TestDataWithUnsupportedType(a=1, b=complex(1, 2), c=True)
+        with self.assertRaises(TypeError):
+            dump(original)
+
+    def test_dict_with_empty_string_key(self) -> None:
+        original = TestDataWithDict(a=1, b={"": 42}, c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithDict)
+        self.assertEqual(original, loaded)
+
+    def test_nested_list_with_empty_sublists(self) -> None:
+        original = TestDataWithNestedList(a=1, b=[[1, 2], [], [3, 4]], c=True)
+        dumped = dump(original)
+        loaded = load(dumped, TestDataWithNestedList)
+        self.assertEqual(original, loaded)
+
+    def test_nested_dataclass(self) -> None:
+        original = OuterData(a=1, b=InnerData(x=42, y="hello"), c=True)
+        dumped = dump(original)
+        loaded = load(dumped, OuterData)
+        self.assertEqual(original, loaded)
+
+    def test_empty_nested_dataclass(self) -> None:
+        original = OuterData(a=1, b=InnerData(x=0, y=""), c=False)
+        dumped = dump(original)
+        loaded = load(dumped, OuterData)
+        self.assertEqual(original, loaded)
 
 if __name__ == '__main__':
     main()
