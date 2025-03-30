@@ -10,6 +10,25 @@ def _dump_field(value: Any, field_type: Type) -> bytes:
         for item in value:
             packed_list += _dump_field(item, element_type)
         return packed_list
+    elif get_origin(field_type) is set:
+        element_type = get_args(field_type)[0]
+        packed_set = struct.pack('i', len(value))
+        for item in value:
+            packed_set += _dump_field(item, element_type)
+        return packed_set
+    elif get_origin(field_type) is tuple:
+        element_types = get_args(field_type)
+        packed_tuple = b""
+        for item, element_type in zip(value, element_types):
+            packed_tuple += _dump_field(item, element_type)
+        return packed_tuple
+    elif get_origin(field_type) is dict:
+        key_type, value_type = get_args(field_type)
+        packed_dict = struct.pack('i', len(value))
+        for key, val in value.items():
+            packed_dict += _dump_field(key, key_type)
+            packed_dict += _dump_field(val, value_type)
+        return packed_dict
     elif issubclass(field_type, int):  # type: ignore[arg-type]
         return struct.pack('i', value)
     elif issubclass(field_type, float):  # type: ignore[arg-type]
@@ -31,6 +50,30 @@ def _load_field(data: bytes, offset: int, field_type: Type) -> (Any, int):
         for _ in range(length):
             item, offset = _load_field(data, offset, element_type)
             value.append(item)
+    elif get_origin(field_type) is set:
+        element_type = field_type.__args__[0]
+        length = struct.unpack_from('i', data, offset)[0]
+        offset += struct.calcsize('i')
+        value = set()
+        for _ in range(length):
+            item, offset = _load_field(data, offset, element_type)
+            value.add(item)
+    elif get_origin(field_type) is tuple:
+        element_types = get_args(field_type)
+        value = []
+        for element_type in element_types:
+            item, offset = _load_field(data, offset, element_type)
+            value.append(item)
+        value = tuple(value)
+    elif get_origin(field_type) is dict:
+        key_type, value_type = get_args(field_type)
+        length = struct.unpack_from('i', data, offset)[0]
+        offset += struct.calcsize('i')
+        value = {}
+        for _ in range(length):
+            key, offset = _load_field(data, offset, key_type)
+            val, offset = _load_field(data, offset, value_type)
+            value[key] = val
     elif issubclass(field_type, int):  # type: ignore[arg-type]
         value = struct.unpack_from('i', data, offset)[0]
         offset += struct.calcsize('i')
@@ -58,7 +101,7 @@ def dump(instance: Any) -> bytes:
 
     for field in fields(instance):
         value = getattr(instance, field.name)
-        if get_origin(field.type) is list:
+        if get_origin(field.type) in {list, set, tuple, dict}:
             packed_data.extend(_dump_field(value, field.type))
         elif issubclass(field.type, bool):  # type: ignore[arg-type]
             bools.append(value)
@@ -83,7 +126,7 @@ def load(data: bytes, cls: Type[Any]) -> Any:
     bool_fields = []
 
     for field in fields(cls):
-        if get_origin(field.type) is list:
+        if get_origin(field.type) in {list, set, tuple, dict}:
             value, offset = _load_field(data, offset, field.type)
             field_values[field.name] = value
         elif issubclass(field.type, bool):  # type: ignore[arg-type]
