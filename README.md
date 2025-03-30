@@ -5,7 +5,10 @@
 ## Features
 
 - Compact serialization
-- Supports `int`, `float`, `bool`, and `str` field types
+- Supports the following field types:
+  - Primitive types: `int`, `float`, `bool`, `str`
+  - Collections: `list`, `set`, `tuple`, `dict`
+  - Nested dataclasses
 
 ## Installation
 
@@ -45,7 +48,7 @@ deserialized = load(serialized, TestData)
 print(deserialized)
 ```
 
-## Example
+## Examples
 
 Here is a complete example:
 
@@ -74,6 +77,29 @@ class Example:
 example = Example(1, 2.0, True, False, True, False, True, False, True, True, False, 87543653.35197087, 1351346, -46583278, True)
 serialized = dump(example)
 deserialized = load(serialized, Example)
+print(deserialized)
+```
+
+Here is another example:
+
+```python
+from dataclasses import dataclass
+from databrief import dump, load
+
+@dataclass
+class InnerData:
+    x: int
+    y: str
+
+@dataclass
+class OuterData:
+    a: int
+    b: InnerData
+    c: bool
+
+example = OuterData(a=1, b=InnerData(x=42, y="hello"), c=True)
+serialized = dump(example)
+deserialized = load(serialized, OuterData)
 print(deserialized)
 ```
 
