@@ -4,7 +4,10 @@ import struct
 
 
 def _dump_field(value: Any, field_type: Type) -> bytes:
-    if get_origin(field_type) is list:
+    if is_dataclass(field_type):
+        packed_data = dump(value)
+        return struct.pack('i', len(packed_data)) + packed_data
+    elif get_origin(field_type) is list:
         element_type = get_args(field_type)[0]
         packed_list = struct.pack('i', len(value))
         for item in value:
@@ -42,7 +45,13 @@ def _dump_field(value: Any, field_type: Type) -> bytes:
         raise TypeError(f'Unsupported field type {field_type}')
 
 def _load_field(data: bytes, offset: int, field_type: Type) -> (Any, int):
-    if get_origin(field_type) is list:
+    if is_dataclass(field_type):
+        length = struct.unpack_from('i', data, offset)[0]
+        offset += struct.calcsize('i')
+        packed_data = data[offset:offset + length]
+        offset += length
+        value = load(packed_data, field_type)
+    elif get_origin(field_type) is list:
         element_type = field_type.__args__[0]
         length = struct.unpack_from('i', data, offset)[0]
         offset += struct.calcsize('i')
