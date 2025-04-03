@@ -265,7 +265,11 @@ class TestDatabrief(TestCase):
         self.assertEqual(original, loaded)
 
     def test_nested_dict_field(self) -> None:
-        original = TestDataWithNestedDict(a=1, b={"outer": {"inner1": 10, "inner2": 20}}, c=True)
+        original = TestDataWithNestedDict(
+            a=1,
+            b={"outer": {"inner1": 10, "inner2": 20}},
+            c=True
+        )
         dumped = dump(original)
         loaded = load(dumped, TestDataWithNestedDict)
         self.assertEqual(original, loaded)
@@ -277,7 +281,11 @@ class TestDatabrief(TestCase):
         self.assertEqual(original, loaded)
 
     def test_mixed_tuple_field(self) -> None:
-        original = TestDataWithMixedTuple(a=1, b=(42, ["hello", "world"], {"key": 3.14}), c=True)
+        original = TestDataWithMixedTuple(
+            a=1,
+            b=(42, ["hello", "world"], {"key": 3.14}),
+            c=True
+        )
         dumped = dump(original)
         loaded = load(dumped, TestDataWithMixedTuple)
         self.assertEqual(original, loaded)
@@ -310,6 +318,7 @@ class TestDatabrief(TestCase):
         dumped = dump(original)
         loaded = load(dumped, OuterData)
         self.assertEqual(original, loaded)
+
 
 if __name__ == '__main__':
     main()

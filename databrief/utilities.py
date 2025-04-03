@@ -1,50 +1,51 @@
 from dataclasses import fields, is_dataclass
-from typing import Any, Type, get_origin, get_args
+from typing import Any, Type, Tuple, get_origin, get_args
 import struct
 
 
-def _dump_field(value: Any, field_type: Type) -> bytes:
+def _dump_field(value: Any, field_type: Type[Any]) -> bytes:
+    packed_data = b""
     if is_dataclass(field_type):
-        packed_data = dump(value)
-        return struct.pack('i', len(packed_data)) + packed_data
+        packed_data = struct.pack('i', len(dump(value))) + dump(value)
     elif get_origin(field_type) is list:
         element_type = get_args(field_type)[0]
-        packed_list = struct.pack('i', len(value))
+        packed_data = struct.pack('i', len(value))
         for item in value:
-            packed_list += _dump_field(item, element_type)
-        return packed_list
+            packed_data += _dump_field(item, element_type)
     elif get_origin(field_type) is set:
         element_type = get_args(field_type)[0]
-        packed_set = struct.pack('i', len(value))
+        packed_data = struct.pack('i', len(value))
         for item in value:
-            packed_set += _dump_field(item, element_type)
-        return packed_set
+            packed_data += _dump_field(item, element_type)
     elif get_origin(field_type) is tuple:
         element_types = get_args(field_type)
-        packed_tuple = b""
         for item, element_type in zip(value, element_types):
-            packed_tuple += _dump_field(item, element_type)
-        return packed_tuple
+            packed_data += _dump_field(item, element_type)
     elif get_origin(field_type) is dict:
         key_type, value_type = get_args(field_type)
-        packed_dict = struct.pack('i', len(value))
+        packed_data = struct.pack('i', len(value))
         for key, val in value.items():
-            packed_dict += _dump_field(key, key_type)
-            packed_dict += _dump_field(val, value_type)
-        return packed_dict
-    elif issubclass(field_type, int):  # type: ignore[arg-type]
-        return struct.pack('i', value)
-    elif issubclass(field_type, float):  # type: ignore[arg-type]
-        return struct.pack('d', value)
-    elif issubclass(field_type, bool):  # type: ignore[arg-type]
-        return struct.pack('?', value)
+            packed_data += _dump_field(key, key_type)
+            packed_data += _dump_field(val, value_type)
+    elif issubclass(field_type, int):
+        packed_data = struct.pack('i', value)
+    elif issubclass(field_type, float):
+        packed_data = struct.pack('d', value)
+    elif issubclass(field_type, bool):
+        packed_data = struct.pack('?', value)
     elif issubclass(field_type, str):
         encoded_string = value.encode('utf-8')
-        return struct.pack('i', len(encoded_string)) + encoded_string
+        packed_data = struct.pack('i', len(encoded_string)) + encoded_string
     else:
         raise TypeError(f'Unsupported field type {field_type}')
+    return packed_data
 
-def _load_field(data: bytes, offset: int, field_type: Type) -> (Any, int):
+
+def _load_field(
+    data: bytes,
+    offset: int,
+    field_type: Type[Any]
+) -> Tuple[Any, int]:
     if is_dataclass(field_type):
         length = struct.unpack_from('i', data, offset)[0]
         offset += struct.calcsize('i')
@@ -83,13 +84,13 @@ def _load_field(data: bytes, offset: int, field_type: Type) -> (Any, int):
             key, offset = _load_field(data, offset, key_type)
             val, offset = _load_field(data, offset, value_type)
             value[key] = val
-    elif issubclass(field_type, int):  # type: ignore[arg-type]
+    elif issubclass(field_type, int):
         value = struct.unpack_from('i', data, offset)[0]
         offset += struct.calcsize('i')
-    elif issubclass(field_type, float):  # type: ignore[arg-type]
+    elif issubclass(field_type, float):
         value = struct.unpack_from('d', data, offset)[0]
         offset += struct.calcsize('d')
-    elif issubclass(field_type, bool):  # type: ignore[arg-type]
+    elif issubclass(field_type, bool):
         value = struct.unpack_from('?', data, offset)[0]
         offset += struct.calcsize('?')
     elif issubclass(field_type, str):
@@ -100,6 +101,7 @@ def _load_field(data: bytes, offset: int, field_type: Type) -> (Any, int):
     else:
         raise TypeError(f'Unsupported field type {field_type}')
     return value, offset
+
 
 def dump(instance: Any) -> bytes:
     if not is_dataclass(instance):
@@ -112,11 +114,11 @@ def dump(instance: Any) -> bytes:
         value = getattr(instance, field.name)
         if get_origin(field.type) in {list, set, tuple, dict}:
             packed_data.extend(_dump_field(value, field.type))
-        elif issubclass(field.type, bool):  # type: ignore[arg-type]
+        elif issubclass(field.type, bool):
             bools.append(value)
         else:
             packed_data.extend(_dump_field(value, field.type))
-    
+
     bool_bytes = bytearray()
 
     for i in range(0, len(bools), 8):
@@ -138,7 +140,7 @@ def load(data: bytes, cls: Type[Any]) -> Any:
         if get_origin(field.type) in {list, set, tuple, dict}:
             value, offset = _load_field(data, offset, field.type)
             field_values[field.name] = value
-        elif issubclass(field.type, bool):  # type: ignore[arg-type]
+        elif issubclass(field.type, bool):
             bool_fields.append(field)
         else:
             value, offset = _load_field(data, offset, field.type)
