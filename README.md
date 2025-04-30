@@ -14,7 +14,7 @@
 
 ```sh
 pip install databrief
-````
+```
 
 ## Usage
 
