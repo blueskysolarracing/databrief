@@ -48,9 +48,9 @@ def _dump_field(value: Any, field_type: type[Any]) -> bytes:
 
 
 def _load_field(
-    data: bytes,
-    offset: int,
-    field_type: type[Any]
+        data: bytes,
+        offset: int,
+        field_type: type[Any],
 ) -> tuple[Any, int]:
     if is_dataclass(field_type):
         length = unpack_from('i', data, offset)[0]
