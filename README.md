@@ -105,7 +105,27 @@ print(deserialized)
 
 ## Contributing
 
-Contributions are welcome! Please read our Contributing Guide for more information.
+### Code Style and Static Type Checking
+
+Run style checker.
+
+``
+flake8 ./databrief
+``
+
+Run static type checker.
+
+``
+mypy --strict databrief
+``
+
+### Unit and Documentation Testing
+
+Run unit tests.
+
+``
+python -m unittest
+``
 
 ## License
 
