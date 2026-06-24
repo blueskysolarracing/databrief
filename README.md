@@ -20,7 +20,7 @@ pip install databrief
 
 ### Dumping a Dataclass to Bytes
 
-To serialize a dataclass instance to bytes, use the `dump` function:
+To serialize a dataclass instance to bytes with specific integer and floating point sizes, use the `dump` function:
 
 ```python
 from databrief import dump
@@ -33,18 +33,18 @@ class TestData:
     c: bool
 
 data = TestData(a=42, b=3.14, c=True)
-serialized = dump(data)
+serialized = dump(data, 4, 8) # int32 and fp64
 print(serialized)
 ```
 
 ### Loading Bytes to a Dataclass
 
-To deserialize bytes back to a dataclass instance, use the `load` function:
+To deserialize bytes back to a dataclass instance with given integer and floating point sizes, use the `load` function:
 
 ```python
 from databrief import load
 
-deserialized = load(serialized, TestData)
+deserialized = load(serialized, TestData, 4, 8) # int32 and fp64
 print(deserialized)
 ```
 
@@ -75,8 +75,8 @@ class Example:
     o: bool
 
 example = Example(1, 2.0, True, False, True, False, True, False, True, True, False, 87543653.35197087, 1351346, -46583278, True)
-serialized = dump(example)
-deserialized = load(serialized, Example)
+serialized = dump(example, 4, 8)
+deserialized = load(serialized, Example, 4, 8)
 print(deserialized)
 ```
 
@@ -98,8 +98,8 @@ class OuterData:
     c: bool
 
 example = OuterData(a=1, b=InnerData(x=42, y="hello"), c=True)
-serialized = dump(example)
-deserialized = load(serialized, OuterData)
+serialized = dump(example, 4, 8)
+deserialized = load(serialized, OuterData, 4, 8)
 print(deserialized)
 ```
 
